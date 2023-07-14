@@ -7,6 +7,8 @@ import {
   Param,
   Get,
   Res,
+  ParseFilePipeBuilder,
+  HttpStatus,
 } from '@nestjs/common';
 import { Express, Response } from 'express';
 import { AppService } from './app.service';
@@ -18,7 +20,22 @@ export class AppController {
 
   @UseInterceptors(FileInterceptor('image'))
   @Post()
-  async uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addMaxSizeValidator({
+          maxSize: 1024 * 1024 * 2,
+          message: 'Image too large (max size: 2mb).',
+        })
+        .addFileTypeValidator({
+          fileType: /\.(jpg|jpeg|png)$/,
+        })
+        .build({
+          errorHttpStatusCode: HttpStatus.BAD_REQUEST,
+        }),
+    )
+    file: Express.Multer.File,
+  ) {
     return this._appService.uploadImage(file);
   }
 
