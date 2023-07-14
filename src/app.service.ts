@@ -13,6 +13,7 @@ import {
 import config from './config';
 import { Readable } from 'stream';
 import { GetObjectRes } from './models/get-object-res';
+import { GetObjectError } from './models/get-object-error';
 
 @Injectable()
 export class AppService {
@@ -49,21 +50,21 @@ export class AppService {
       Bucket: this._config.bucketName,
       Key: `${this._path}${fileName}`,
     };
-    let exists = true;
     let res: GetObjectCommandOutput;
 
     const command = new GetObjectCommand(input);
 
     try {
       res = await this._s3Client.send(command);
-    } catch {
-      exists = false;
-    }
+    } catch (error) {
+      const err = error as unknown as GetObjectError;
+      this._logger.error(err.message);
 
-    if (!exists)
       return {
-        exists,
+        errorMessage: err.message,
+        statusCode: err.$metadata.httpStatusCode,
       };
+    }
 
     this._logger.log(res.ContentType);
 
@@ -72,7 +73,7 @@ export class AppService {
     return {
       buffer,
       contentType: res.ContentType,
-      exists: true,
+      statusCode: res.$metadata.httpStatusCode,
     };
   }
 

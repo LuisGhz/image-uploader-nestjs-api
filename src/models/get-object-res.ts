@@ -1,5 +1,6 @@
 export interface GetObjectRes {
-  exists: boolean;
+  statusCode: number;
+  errorMessage?: string;
   buffer?: Buffer;
   contentType?: string;
 }

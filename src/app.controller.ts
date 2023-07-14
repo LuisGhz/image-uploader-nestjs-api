@@ -18,7 +18,7 @@ export class AppController {
 
   @UseInterceptors(FileInterceptor('image'))
   @Post()
-  uploadImage(@UploadedFile() file: Express.Multer.File) {
+  async uploadImage(@UploadedFile() file: Express.Multer.File) {
     return this._appService.uploadImage(file);
   }
 
@@ -26,9 +26,9 @@ export class AppController {
   async getImage(@Param('fileName') fileName: string, @Res() res: Response) {
     const awsRes = await this._appService.getImage(fileName);
 
-    if (awsRes.exists) {
+    if (awsRes.errorMessage == null) {
       res.attachment(fileName);
-      res.writeHead(200, {
+      res.writeHead(awsRes.statusCode, {
         'Content-Type': awsRes.contentType,
         'Content-disposition': `attachment;filename=${fileName}`,
       });
@@ -36,9 +36,9 @@ export class AppController {
       return;
     }
 
-    res.statusCode = 404;
+    res.statusCode = awsRes.statusCode;
     res.send({
-      message: 'Image not found',
+      message: awsRes.errorMessage,
     });
   }
 
