@@ -25,7 +25,7 @@ export class AppService {
       accessKeyId: this._config.accessKey,
       secretAccessKey: this._config.secretKey,
     },
-    region: 'us-east-2',
+    region: this._config.bucketRegion,
   });
   private _path = 'image-uploader/';
 
