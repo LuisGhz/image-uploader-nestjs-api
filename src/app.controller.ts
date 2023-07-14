@@ -25,13 +25,21 @@ export class AppController {
   @Get(':fileName')
   async getImage(@Param('fileName') fileName: string, @Res() res: Response) {
     const awsRes = await this._appService.getImage(fileName);
-    res.attachment(fileName);
-    res.writeHead(200, {
-      'Content-Type': 'image/jpg',
-      'Content-disposition': `attachment;filename=${fileName}`,
-    });
 
-    res.end(awsRes);
+    if (awsRes.exists) {
+      res.attachment(fileName);
+      res.writeHead(200, {
+        'Content-Type': awsRes.contentType,
+        'Content-disposition': `attachment;filename=${fileName}`,
+      });
+      res.end(awsRes.buffer);
+      return;
+    }
+
+    res.statusCode = 404;
+    res.send({
+      message: 'Image not found',
+    });
   }
 
   @Delete(':fileName')

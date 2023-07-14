@@ -1,6 +1,5 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import { Express } from 'express';
 import {
   S3Client,
   PutObjectCommand,
@@ -9,12 +8,15 @@ import {
   PutObjectCommandInput,
   DeleteObjectCommandInput,
   GetObjectCommandInput,
+  GetObjectCommandOutput,
 } from '@aws-sdk/client-s3';
 import config from './config';
 import { Readable } from 'stream';
+import { GetObjectRes } from './models/get-object-res';
 
 @Injectable()
 export class AppService {
+  private _logger = new Logger(AppService.name);
   private _s3Client = new S3Client({
     credentials: {
       accessKeyId: this._config.accessKey,
@@ -33,6 +35,8 @@ export class AppService {
       Bucket: this._config.bucketName,
       Key: `${this._path}${dateNumber}-${file.originalname}`,
       Body: file.buffer,
+      ContentType: file.mimetype,
+      ContentLength: file.size,
     };
 
     const command = new PutObjectCommand(input);
@@ -40,24 +44,36 @@ export class AppService {
     return this._s3Client.send(command);
   }
 
-  async getImage(fileName: string) {
+  async getImage(fileName: string): Promise<GetObjectRes> {
     const input: GetObjectCommandInput = {
       Bucket: this._config.bucketName,
       Key: `${this._path}${fileName}`,
     };
+    let exists = true;
+    let res: GetObjectCommandOutput;
 
     const command = new GetObjectCommand(input);
 
-    const res = await this._s3Client.send(command);
+    try {
+      res = await this._s3Client.send(command);
+    } catch {
+      exists = false;
+    }
 
-    const stream = res.Body as Readable;
+    if (!exists)
+      return {
+        exists,
+      };
 
-    return new Promise<Buffer>((resolve, reject) => {
-      const chunks: Buffer[] = [];
-      stream.on('data', (chunk) => chunks.push(chunk));
-      stream.once('end', () => resolve(Buffer.concat(chunks)));
-      stream.once('error', reject);
-    });
+    this._logger.log(res.ContentType);
+
+    const buffer = await this.#bodyToBuffer(res);
+
+    return {
+      buffer,
+      contentType: res.ContentType,
+      exists: true,
+    };
   }
 
   deleteImage(fileName: string) {
@@ -69,5 +85,16 @@ export class AppService {
     const command = new DeleteObjectCommand(input);
 
     return this._s3Client.send(command);
+  }
+
+  #bodyToBuffer(res: GetObjectCommandOutput): Promise<Buffer> {
+    const stream = res.Body as Readable;
+
+    return new Promise<Buffer>((resolve, reject) => {
+      const chunks: Buffer[] = [];
+      stream.on('data', (chunk) => chunks.push(chunk));
+      stream.on('end', () => resolve(Buffer.concat(chunks)));
+      stream.on('error', reject);
+    });
   }
 }
