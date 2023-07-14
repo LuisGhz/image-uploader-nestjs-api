@@ -1,4 +1,4 @@
-export interface GetObjectError {
+export interface AWSResError {
   name: string;
   $fault: string;
   $metadata: Metadata;

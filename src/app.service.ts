@@ -9,11 +9,13 @@ import {
   DeleteObjectCommandInput,
   GetObjectCommandInput,
   GetObjectCommandOutput,
+  PutObjectCommandOutput,
 } from '@aws-sdk/client-s3';
 import config from './config';
 import { Readable } from 'stream';
 import { GetObjectRes } from './models/get-object-res';
-import { GetObjectError } from './models/get-object-error';
+import { AWSResError } from './models/aws-res-error';
+import { PutObjectRes } from './models/put-object-res';
 
 @Injectable()
 export class AppService {
@@ -29,20 +31,35 @@ export class AppService {
 
   constructor(@Inject(config.KEY) private _config: ConfigType<typeof config>) {}
 
-  uploadImage(file: Express.Multer.File) {
+  async uploadImage(file: Express.Multer.File): Promise<PutObjectRes> {
     const dateNumber = new Date().getTime();
+    const newFileName = `${dateNumber}-${file.originalname}`;
+    let awsRes: PutObjectCommandOutput;
 
     const input: PutObjectCommandInput = {
       Bucket: this._config.bucketName,
-      Key: `${this._path}${dateNumber}-${file.originalname}`,
+      Key: `${this._path}${newFileName}`,
       Body: file.buffer,
       ContentType: file.mimetype,
       ContentLength: file.size,
     };
 
     const command = new PutObjectCommand(input);
+    try {
+      awsRes = await this._s3Client.send(command);
+    } catch (error) {
+      const err = error as unknown as AWSResError;
+      this._logger.error(err.message);
+      return {
+        statusCode: err.$metadata.httpStatusCode,
+        errorMessage: err.message,
+      };
+    }
 
-    return this._s3Client.send(command);
+    return {
+      fileName: newFileName,
+      statusCode: awsRes.$metadata.httpStatusCode,
+    };
   }
 
   async getImage(fileName: string): Promise<GetObjectRes> {
@@ -57,7 +74,7 @@ export class AppService {
     try {
       res = await this._s3Client.send(command);
     } catch (error) {
-      const err = error as unknown as GetObjectError;
+      const err = error as unknown as AWSResError;
       this._logger.error(err.message);
 
       return {

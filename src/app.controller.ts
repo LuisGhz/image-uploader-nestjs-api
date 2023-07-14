@@ -35,8 +35,21 @@ export class AppController {
         }),
     )
     file: Express.Multer.File,
+    @Res() res: Response,
   ) {
-    return this._appService.uploadImage(file);
+    const awsRes = await this._appService.uploadImage(file);
+    if (awsRes.statusCode === HttpStatus.OK) {
+      res.statusCode = HttpStatus.OK;
+      res.send({
+        fileName: awsRes.fileName,
+      });
+      return;
+    }
+
+    res.statusCode = awsRes.statusCode;
+    res.send({
+      error: awsRes.errorMessage,
+    });
   }
 
   @Get(':fileName')
