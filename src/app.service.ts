@@ -66,8 +66,6 @@ export class AppService {
       };
     }
 
-    this._logger.log(res.ContentType);
-
     const buffer = await this.#bodyToBuffer(res);
 
     return {
