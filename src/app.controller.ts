@@ -9,14 +9,20 @@ import {
   Res,
   ParseFilePipeBuilder,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
 import { Express, Response } from 'express';
 import { AppService } from './app.service';
 import { FileInterceptor } from '@nestjs/platform-express';
+import config from './config';
+import { ConfigType } from '@nestjs/config';
 
 @Controller('/api')
 export class AppController {
-  constructor(private readonly _appService: AppService) {}
+  constructor(
+    private readonly _appService: AppService,
+    @Inject(config.KEY) private _config: ConfigType<typeof config>,
+  ) {}
 
   @UseInterceptors(FileInterceptor('image'))
   @Post()
@@ -41,7 +47,7 @@ export class AppController {
     if (awsRes.statusCode === HttpStatus.OK) {
       res.statusCode = HttpStatus.OK;
       res.send({
-        fileName: awsRes.fileName,
+        fileUrl: `${this._config.bucketUrl}${awsRes.fileName}`,
       });
       return;
     }
