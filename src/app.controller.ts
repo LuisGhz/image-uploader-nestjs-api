@@ -28,7 +28,7 @@ export class AppController {
           message: 'Image too large (max size: 2mb).',
         })
         .addFileTypeValidator({
-          fileType: /\.(jpg|jpeg|png)$/,
+          fileType: new RegExp(/image\/(jpe?g|png|gif)/i),
         })
         .build({
           errorHttpStatusCode: HttpStatus.BAD_REQUEST,
