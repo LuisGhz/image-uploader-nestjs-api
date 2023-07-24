@@ -12,11 +12,6 @@ phases:
     commands:
       - echo Build started
       - npm run build
-  post_build:
-    commands:
-      - echo Compress build
-      - cd dist
-      - tar -czfv ../upload-file.tgz *
 artifacts:
   files:
-    - upload-file.tgz
+    - dist/*
