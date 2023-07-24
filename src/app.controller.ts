@@ -10,6 +10,7 @@ import {
   ParseFilePipeBuilder,
   HttpStatus,
   Inject,
+  HttpException,
 } from '@nestjs/common';
 import { Express, Response } from 'express';
 import { AppService } from './app.service';
@@ -37,7 +38,11 @@ export class AppController {
           fileType: new RegExp(/image\/(jpe?g|png|gif)/i),
         })
         .build({
-          errorHttpStatusCode: HttpStatus.BAD_REQUEST,
+          exceptionFactory(error) {
+            if (error.startsWith('Validation failed'))
+              error = 'Image not valid.';
+            throw new HttpException(error, HttpStatus.BAD_REQUEST);
+          },
         }),
     )
     file: Express.Multer.File,
@@ -53,8 +58,9 @@ export class AppController {
     }
 
     res.statusCode = awsRes.statusCode;
+    res.statusMessage = 'AWS Error';
     res.send({
-      error: awsRes.errorMessage,
+      message: awsRes.errorMessage,
     });
   }
 
@@ -73,6 +79,7 @@ export class AppController {
     }
 
     res.statusCode = awsRes.statusCode;
+    res.statusMessage = 'AWS Error';
     res.send({
       message: awsRes.errorMessage,
     });
