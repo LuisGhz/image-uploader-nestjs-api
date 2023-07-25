@@ -16,3 +16,4 @@ artifacts:
   files:
     - dist/*
     - dist/models/*
+    - appspec.yaml
