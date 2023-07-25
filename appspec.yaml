@@ -1,0 +1,10 @@
+version: 0.0
+os: linux
+files:
+  - source: /dist
+    destination: /var/www/example/html
+#hooks:
+#  BeforeInstall:
+#    - location: scripts/cleanup.sh
+#      timeout: 300
+#      runas: root
