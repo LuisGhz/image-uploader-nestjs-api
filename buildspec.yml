@@ -16,5 +16,5 @@ artifacts:
   files:
     - dist/*
     - dist/models/*
-    - appspec.yaml
+    - appspec.yml
     - scripts/*
