@@ -7,5 +7,6 @@ export default registerAs('config', () => {
     accessKey: process.env.ACCESS_KEY,
     secretKey: process.env.SECRET_KEY,
     bucketUrl: process.env.BUCKET_URL,
+    hello: process.env.HELLO_WORLD,
   };
 });

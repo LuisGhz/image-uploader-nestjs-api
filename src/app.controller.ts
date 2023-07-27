@@ -25,6 +25,11 @@ export class AppController {
     @Inject(config.KEY) private _config: ConfigType<typeof config>,
   ) {}
 
+  @Get('/hello')
+  helloWorld() {
+    return this._config.hello + ' from aws lightsail';
+  }
+
   @UseInterceptors(FileInterceptor('image'))
   @Post()
   async uploadImage(
