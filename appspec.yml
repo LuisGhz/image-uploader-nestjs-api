@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: .
-    destination: /var/www/image-uploader-devchallenges-io
+    destination: /home/bitnami/www/image-uploader-devchallenges-io
 hooks:
     BeforeInstall:
     - location: scripts/before_install.sh
